@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Habit Tracker Cipa</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f5f0; color: #1a1a1a; min-height: 100vh; overflow-x: hidden; }
+
+  @keyframes bounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-6px)} }
+  @keyframes wiggle { 0%,100%{transform:rotate(0deg)} 25%{transform:rotate(-10deg)} 75%{transform:rotate(10deg)} }
+  @keyframes pop { 0%{transform:scale(1)} 40%{transform:scale(1.35)} 70%{transform:scale(0.9)} 100%{transform:scale(1)} }
+  @keyframes float-up { 0%{opacity:1;transform:translateY(0) scale(1)} 100%{opacity:0;transform:translateY(-80px) scale(1.6)} }
+  @keyframes star-spin { 0%{transform:rotate(0deg) scale(0)} 50%{transform:rotate(180deg) scale(1.2)} 100%{transform:rotate(360deg) scale(1)} }
+  @keyframes confetti-fall { 0%{transform:translateY(-10px) rotate(0deg);opacity:1} 100%{transform:translateY(100px) rotate(720deg);opacity:0} }
+  @keyframes rainbow { 0%{color:#ff6b6b} 20%{color:#ffa94d} 40%{color:#ffd43b} 60%{color:#69db7c} 80%{color:#74c0fc} 100%{color:#da77f2} }
+  @keyframes tada { 0%{transform:scale(1)} 10%{transform:scale(0.9) rotate(-3deg)} 20%{transform:scale(1.1) rotate(3deg)} 30%{transform:scale(1.1) rotate(-3deg)} 40%{transform:scale(1.1) rotate(3deg)} 50%{transform:scale(1.1) rotate(-3deg)} 60%{transform:scale(1.1) rotate(3deg)} 70%{transform:scale(1.1) rotate(-3deg)} 80%{transform:scale(1.1) rotate(3deg)} 90%{transform:scale(1.1) rotate(-3deg)} 100%{transform:scale(1) rotate(0)} }
+  @keyframes slide-in { 0%{transform:translateX(60px);opacity:0} 100%{transform:translateX(0);opacity:1} }
+
+  .topbar { background: linear-gradient(135deg, #a78bfa 0%, #818cf8 100%); padding: 14px 16px; position: sticky; top: 0; z-index: 10; }
+  .topbar h1 { font-size: 17px; font-weight: 700; color: white; }
+  .topbar p { font-size: 12px; color: rgba(255,255,255,0.8); margin-top: 1px; }
+  .topbar .star { display:inline-block; animation: wiggle 1.5s infinite; }
+
+  .mascot-wrap { text-align: center; padding: 16px 0 4px; }
+  .mascot { font-size: 52px; display: inline-block; animation: bounce 2s infinite ease-in-out; cursor: default; transition: animation 0.3s; }
+  .mascot.happy { animation: tada 0.8s ease-in-out; }
+  .mascot-msg { font-size: 13px; color: #7c6fcd; font-weight: 600; margin-top: 4px; min-height: 20px; transition: all 0.3s; }
+
+  .content { padding: 10px 14px 40px; max-width: 480px; margin: 0 auto; }
+  .stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 14px; }
+  .stat { background: #fff; border-radius: 12px; padding: 12px 14px; border: 0.5px solid #e8e8e0; }
+  .stat-v { font-size: 26px; font-weight: 700; color: #7c6fcd; }
+  .stat-l { font-size: 11px; color: #888; margin-top: 2px; }
+
+  .day-scroll { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 2px; margin-bottom: 14px; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+  .day-scroll::-webkit-scrollbar { display: none; }
+  .dtab { flex-shrink: 0; min-width: 58px; padding: 9px 8px; border-radius: 10px; border: 0.5px solid #e0e0d8; font-size: 12px; text-align: center; cursor: pointer; background: #fff; color: #888; -webkit-tap-highlight-color: transparent; user-select: none; transition: all 0.2s; }
+  .dtab.active { background: #EEEDFE; color: #3C3489; border-color: #AFA9EC; font-weight: 600; transform: scale(1.05); }
+  .dtab.done { background: #EAF3DE; color: #27500A; border-color: #97C459; }
+  .dtab .dname { font-weight: 600; font-size: 13px; }
+  .dtab .ddate { font-size: 10px; opacity: .7; margin-top: 1px; }
+
+  .pbar-wrap { margin-bottom: 14px; }
+  .pbar-top { display: flex; justify-content: space-between; font-size: 12px; color: #888; margin-bottom: 5px; }
+  .pbar { height: 10px; background: #e8e8e0; border-radius: 99px; overflow: hidden; }
+  .pbar-fill { height: 100%; background: linear-gradient(90deg, #a78bfa, #818cf8); border-radius: 99px; transition: width 0.4s cubic-bezier(.34,1.56,.64,1); }
+
+  .section-label { font-size: 11px; font-weight: 700; color: #999; text-transform: uppercase; letter-spacing: .06em; margin: 16px 0 8px; }
+  .hlist { display: flex; flex-direction: column; gap: 7px; }
+
+  .hitem { display: flex; align-items: center; border-radius: 16px; border: 0.5px solid #e0e0d8; background: #fff; cursor: pointer; min-height: 66px; overflow: hidden; -webkit-tap-highlight-color: transparent; user-select: none; transition: all 0.2s; position: relative; }
+  .hitem:active { transform: scale(0.97); }
+  .hitem.ck { background: #EAF3DE; border-color: #97C459; }
+  .hcheck { width: 60px; min-height: 66px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .hbox { width: 30px; height: 30px; border-radius: 50%; border: 1.5px solid #ccc; display: flex; align-items: center; justify-content: center; transition: all .2s; }
+  .hitem.ck .hbox { background: #639922; border-color: #639922; animation: pop 0.35s ease; }
+  .hcheck-icon { display: none; color: white; font-size: 16px; font-weight: 700; }
+  .hitem.ck .hcheck-icon { display: block; }
+  .hbody { flex: 1; padding: 12px 14px 12px 0; }
+  .hname { font-size: 14px; font-weight: 600; color: #1a1a1a; line-height: 1.3; }
+  .hitem.ck .hname { color: #27500A; }
+  .hnote { font-size: 12px; color: #888; margin-top: 2px; line-height: 1.3; }
+  .htag { display: inline-block; font-size: 10px; padding: 2px 8px; border-radius: 99px; margin-top: 5px; font-weight: 600; }
+  .t-ibadah { background: #EEEDFE; color: #3C3489; }
+  .t-belajar { background: #E6F1FB; color: #0C447C; }
+  .t-sehat { background: #EAF3DE; color: #27500A; }
+  .t-screen { background: #FAEEDA; color: #633806; }
+
+  .mandi-card { background: #fff; border-radius: 16px; border: 0.5px solid #e0e0d8; overflow: hidden; transition: all 0.2s; }
+  .mandi-card.ck2 { background: #EAF3DE; border-color: #639922; }
+  .mandi-card.ck1 { border-color: #97C459; }
+  .mandi-header { padding: 10px 14px 6px; }
+  .mandi-title { font-size: 14px; font-weight: 600; color: #1a1a1a; }
+  .mandi-card.ck2 .mandi-title { color: #27500A; }
+  .mandi-note { font-size: 12px; color: #888; margin-top: 1px; }
+  .mandi-rows { border-top: 0.5px solid #f0f0e8; margin-top: 8px; }
+  .mandi-row { display: flex; align-items: center; min-height: 52px; cursor: pointer; -webkit-tap-highlight-color: transparent; user-select: none; padding: 0 14px; gap: 12px; transition: background 0.15s; }
+  .mandi-row:not(:last-child) { border-bottom: 0.5px solid #f0f0e8; }
+  .mandi-row:active { transform: scale(0.98); }
+  .mandi-row.ck { background: #EAF3DE; }
+  .mandi-row .mbox { width: 26px; height: 26px; border-radius: 50%; border: 1.5px solid #ccc; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: all .2s; }
+  .mandi-row.ck .mbox { background: #639922; border-color: #639922; animation: pop 0.35s ease; }
+  .mandi-row .mcheck-icon { display: none; color: white; font-size: 14px; font-weight: 700; }
+  .mandi-row.ck .mcheck-icon { display: block; }
+  .mandi-row .mlabel { font-size: 13px; color: #555; font-weight: 500; }
+  .mandi-row.ck .mlabel { color: #27500A; }
+  .htag-wrap { padding: 0 14px 10px; }
+
+  .sholat-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
+  .sitem { display: flex; flex-direction: column; align-items: center; gap: 5px; padding: 12px 4px; border-radius: 12px; border: 0.5px solid #e0e0d8; background: #fff; cursor: pointer; min-height: 76px; justify-content: center; -webkit-tap-highlight-color: transparent; user-select: none; transition: all 0.2s; }
+  .sitem:active { transform: scale(0.93); }
+  .sitem.ck { background: #EEEDFE; border-color: #AFA9EC; }
+  .sbox { width: 26px; height: 26px; border-radius: 50%; border: 1.5px solid #ccc; display: flex; align-items: center; justify-content: center; font-size: 14px; color: transparent; font-weight: 700; transition: all .2s; }
+  .sitem.ck .sbox { background: #534AB7; border-color: #534AB7; color: white; animation: pop 0.35s ease; }
+  .sname { font-size: 11px; color: #888; text-align: center; font-weight: 600; }
+  .sitem.ck .sname { color: #3C3489; }
+  .stime { font-size: 10px; color: #aaa; text-align: center; }
+
+  .float-emoji { position: fixed; pointer-events: none; font-size: 28px; z-index: 999; animation: float-up 0.9s ease-out forwards; }
+  .confetti { position: fixed; pointer-events: none; width: 8px; height: 8px; border-radius: 2px; z-index: 999; animation: confetti-fall 1s ease-out forwards; }
+
+  .complete-banner { display:none; text-align:center; background: linear-gradient(135deg,#a78bfa,#818cf8); border-radius:16px; padding:14px; margin-top:14px; color:white; }
+  .complete-banner.show { display:block; animation: slide-in 0.4s ease; }
+  .complete-banner .big { font-size:36px; animation: bounce 1s infinite; display:inline-block; }
+  .complete-banner p { font-size:14px; font-weight:600; margin-top:6px; }
+
+  .reset-btn { margin-top: 24px; text-align: center; }
+  .reset-btn button { background: none; border: 0.5px solid #e0e0d8; border-radius: 8px; padding: 8px 16px; font-size: 12px; color: #aaa; cursor: pointer; }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <h1><span class="star">⭐</span> Habit Tracker Cipa</h1>
+  <p>Minggu 23 – 29 Juni 2026</p>
+</div>
+
+<div class="mascot-wrap">
+  <div class="mascot" id="mascot">🐱</div>
+  <div class="mascot-msg" id="mascot-msg">Halo Cipa! Ayo semangat hari ini! 💪</div>
+</div>
+
+<div class="content">
+  <div class="stats" id="stats"></div>
+  <div class="day-scroll" id="daytabs"></div>
+  <div class="pbar-wrap">
+    <div class="pbar-top"><span id="plabel">Progress</span><span id="ppct">0%</span></div>
+    <div class="pbar"><div class="pbar-fill" id="pfill" style="width:0%"></div></div>
+  </div>
+  <div class="section-label">Kebiasaan harian</div>
+  <div class="hlist" id="hlist"></div>
+  <div class="section-label" style="margin-top:18px;">🕌 Sholat 5 waktu</div>
+  <div class="sholat-grid" id="sgrid"></div>
+  <div class="complete-banner" id="complete-banner">
+    <div class="big">🎉</div>
+    <p>YEAY! Semua selesai hari ini!<br>Cipa keren banget! 🌟✨</p>
+  </div>
+  <div class="reset-btn"><button onclick="resetDay()">Reset hari ini</button></div>
+</div>
+
+<script>
+const DAYS=[{s:'Sen',d:'23/6'},{s:'Sel',d:'24/6'},{s:'Rab',d:'25/6'},{s:'Kam',d:'26/6'},{s:'Jum',d:'27/6'},{s:'Sab',d:'28/6'},{s:'Min',d:'29/6'}];
+const SHOLAT=[{n:'Subuh',t:'~04.45'},{n:'Dzuhur',t:'~12.00'},{n:'Ashar',t:'~15.15'},{n:'Magrib',t:'~18.00'},{n:'Isya',t:'~19.15'}];
+const HABITS=[
+  {id:'mengaji',name:'Mengaji setelah Magrib',note:'Wajib setiap hari',tag:'ibadah'},
+  {id:'belajar',name:'Belajar 1 jam',note:(d)=>d>=5?'Weekend: explore bebas 🎨':'Weekday: ulang pelajaran + PR 📚',tag:'belajar',dyn:true},
+  {id:'tidur',name:'Tidur siang',note:'Wajib setiap hari',tag:'sehat'},
+  {id:'screen',name:'Screen time maks 1 jam',note:'Game & video total maksimal 60 menit',tag:'screen'},
+  {id:'olahraga',name:'Olahraga minggu ini',note:(d)=>d===5?'Hari olahraga! Bulutangkis / senam 🏸':'1x seminggu sudah cukup',tag:'sehat',dyn:true}
+];
+
+const MASCOTS_IDLE=['🐱','🐶','🦊','🐸','🐧'];
+const MASCOT_MSGS=[
+  'Halo Cipa! Ayo semangat hari ini! 💪',
+  'Yuk mulai, kamu pasti bisa! 🌈',
+  'Satu per satu ya Cipa! 😊',
+  'Semangaaat! Kamu keren banget! ⭐',
+  'Udah mandi belum? Hehe 🚿'
+];
+const CHEER_EMOJIS=['⭐','✨','🌟','💫','🎉','🎊','❤️','🌸','🦋'];
+const CONFETTI_COLORS=['#a78bfa','#818cf8','#fbbf24','#34d399','#f472b6','#60a5fa'];
+
+let cur=0;
+let mascotIdx=0;
+let st=null;
+try{st=JSON.parse(localStorage.getItem('cipa_tracker_v2'));}catch(e){}
+if(!st)st={};
+for(let d=0;d<7;d++){
+  if(!st[d])st[d]={h:{},s:{},m1:false,m2:false};
+  HABITS.forEach(h=>{if(st[d].h[h.id]===undefined)st[d].h[h.id]=false;});
+  SHOLAT.forEach(s=>{if(st[d].s[s.n]===undefined)st[d].s[s.n]=false;});
+  if(st[d].m1===undefined)st[d].m1=false;
+  if(st[d].m2===undefined)st[d].m2=false;
+}
+
+function save(){try{localStorage.setItem('cipa_tracker_v2',JSON.stringify(st));}catch(e){}}
+function total(){return HABITS.length+SHOLAT.length+2;}
+function done(d){
+  return Object.values(st[d].h).filter(Boolean).length
+    +Object.values(st[d].s).filter(Boolean).length
+    +(st[d].m1?1:0)+(st[d].m2?1:0);
+}
+
+function spawnEmoji(e){
+  const el=document.createElement('div');
+  el.className='float-emoji';
+  el.textContent=CHEER_EMOJIS[Math.floor(Math.random()*CHEER_EMOJIS.length)];
+  const rect=e.target.closest('.hitem,.sitem,.mandi-row')?.getBoundingClientRect()||{left:window.innerWidth/2,top:window.innerHeight/2};
+  el.style.left=(rect.left+Math.random()*rect.width)+'px';
+  el.style.top=(rect.top+window.scrollY)+'px';
+  document.body.appendChild(el);
+  setTimeout(()=>el.remove(),950);
+}
+
+function spawnConfetti(){
+  for(let i=0;i<22;i++){
+    setTimeout(()=>{
+      const el=document.createElement('div');
+      el.className='confetti';
+      el.style.left=Math.random()*100+'vw';
+      el.style.top='0px';
+      el.style.background=CONFETTI_COLORS[Math.floor(Math.random()*CONFETTI_COLORS.length)];
+      el.style.animationDuration=(0.7+Math.random()*0.6)+'s';
+      el.style.animationDelay=(Math.random()*0.4)+'s';
+      document.body.appendChild(el);
+      setTimeout(()=>el.remove(),1400);
+    },i*30);
+  }
+}
+
+function updateMascot(){
+  const d=done(cur),t=total(),p=d/t;
+  const mascot=document.getElementById('mascot');
+  const msg=document.getElementById('mascot-msg');
+  if(p===1){
+    mascot.textContent='🥳';
+    msg.textContent='SEMPURNA! Cipa luar biasa hari ini! 🎉🌟';
+    mascot.style.animation='none';
+    setTimeout(()=>mascot.style.animation='tada 0.8s ease-in-out',10);
+  } else if(p>=0.7){
+    mascot.textContent='😄';
+    msg.textContent='Wah hampir selesai! Dikit lagi Cipa! 🔥';
+  } else if(p>=0.4){
+    mascot.textContent='😊';
+    msg.textContent='Bagus! Terus semangat ya! ⭐';
+  } else {
+    mascot.textContent=MASCOTS_IDLE[mascotIdx%MASCOTS_IDLE.length];
+    msg.textContent=MASCOT_MSGS[Math.floor(Math.random()*MASCOT_MSGS.length)];
+  }
+}
+
+function renderStats(){
+  const el=document.getElementById('stats');
+  const tp=Math.round(done(cur)/total()*100);
+  let wdone=0,wposs=0;
+  for(let d=0;d<7;d++){wposs+=total();wdone+=done(d);}
+  const wp=Math.round(wdone/wposs*100);
+  el.innerHTML=`
+    <div class="stat"><div class="stat-v">${tp}%</div><div class="stat-l">Hari ini</div></div>
+    <div class="stat"><div class="stat-v">${wp}%</div><div class="stat-l">Minggu ini</div></div>`;
+}
+
+function renderTabs(){
+  const el=document.getElementById('daytabs');
+  el.innerHTML=DAYS.map((d,i)=>{
+    const isDone=done(i)===total();
+    return `<div class="dtab ${i===cur?'active':''} ${isDone?'done':''}" onclick="sel(${i})">
+      <div class="dname">${d.s}</div><div class="ddate">${d.d}</div>${isDone?'<div style="font-size:10px">✅</div>':''}
+    </div>`;
+  }).join('');
+}
+
+function renderHabits(){
+  const el=document.getElementById('hlist');
+  let html=HABITS.map(h=>{
+    const ck=st[cur].h[h.id];
+    const note=h.dyn?h.note(cur):h.note;
+    const tagLabel=h.tag==='ibadah'?'Ibadah':h.tag==='belajar'?'Belajar':h.tag==='sehat'?'Sehat':'Screen';
+    return `<div class="hitem${ck?' ck':''}" onclick="togH('${h.id}',event)">
+      <div class="hcheck"><div class="hbox"><span class="hcheck-icon">✓</span></div></div>
+      <div class="hbody">
+        <div class="hname">${h.name}</div>
+        <div class="hnote">${note}</div>
+        <span class="htag t-${h.tag}">${tagLabel}</span>
+      </div>
+    </div>`;
+  }).join('');
+
+  const m1=st[cur].m1,m2=st[cur].m2;
+  const cardCls=m2?'ck2':m1?'ck1':'';
+  html+=`<div class="mandi-card ${cardCls}">
+    <div class="mandi-header">
+      <div class="mandi-title">🚿 Mandi</div>
+      <div class="mandi-note">Wajib minimal 1x, bagusnya 2x sehari</div>
+    </div>
+    <div class="mandi-rows">
+      <div class="mandi-row${m1?' ck':''}" onclick="togM('m1',event)">
+        <div class="mbox"><span class="mcheck-icon">✓</span></div>
+        <div class="mlabel">Mandi pagi</div>
+      </div>
+      <div class="mandi-row${m2?' ck':''}" onclick="togM('m2',event)">
+        <div class="mbox"><span class="mcheck-icon">✓</span></div>
+        <div class="mlabel">Mandi sore / malam</div>
+      </div>
+    </div>
+    <div class="htag-wrap"><span class="htag t-sehat">Sehat</span></div>
+  </div>`;
+  el.innerHTML=html;
+}
+
+function renderSholat(){
+  const el=document.getElementById('sgrid');
+  el.innerHTML=SHOLAT.map(s=>{
+    const ck=st[cur].s[s.n];
+    return `<div class="sitem${ck?' ck':''}" onclick="togS('${s.n}',event)">
+      <div class="sbox">${ck?'✓':''}</div>
+      <div class="sname">${s.n}</div>
+      <div class="stime">${s.t}</div>
+    </div>`;
+  }).join('');
+}
+
+function renderProgress(){
+  const d=done(cur),t=total(),p=Math.round(d/t*100);
+  document.getElementById('plabel').textContent=`${DAYS[cur].s} ${DAYS[cur].d}: ${d}/${t} selesai`;
+  document.getElementById('ppct').textContent=p+'%';
+  document.getElementById('pfill').style.width=p+'%';
+  const banner=document.getElementById('complete-banner');
+  if(d===t){banner.classList.add('show');}else{banner.classList.remove('show');}
+}
+
+function renderAll(){renderStats();renderTabs();renderHabits();renderSholat();renderProgress();updateMascot();}
+function sel(i){cur=i;mascotIdx++;renderAll();}
+
+function togH(id,e){
+  const wasOff=!st[cur].h[id];
+  st[cur].h[id]=!st[cur].h[id];
+  save();renderAll();
+  if(wasOff){spawnEmoji(e);checkComplete();}
+}
+function togS(n,e){
+  const wasOff=!st[cur].s[n];
+  st[cur].s[n]=!st[cur].s[n];
+  save();renderAll();
+  if(wasOff){spawnEmoji(e);checkComplete();}
+}
+function togM(k,e){
+  const wasOff=!st[cur][k];
+  st[cur][k]=!st[cur][k];
+  save();renderAll();
+  if(wasOff){spawnEmoji(e);checkComplete();}
+}
+function checkComplete(){
+  if(done(cur)===total()){
+    setTimeout(spawnConfetti,200);
+    setTimeout(spawnConfetti,600);
+  }
+}
+function resetDay(){
+  if(confirm('Reset semua ceklis hari ini?')){
+    HABITS.forEach(h=>{st[cur].h[h.id]=false;});
+    SHOLAT.forEach(s=>{st[cur].s[s.n]=false;});
+    st[cur].m1=false;st[cur].m2=false;
+    save();renderAll();
+  }
+}
+
+renderAll();
+setInterval(()=>{
+  if(done(cur)<total()){
+    const msgs=['Ayo Cipa bisa! 💪','Semangat terus ya! 🌟','Kamu keren banget! ⭐','Jangan lupa sholat ya! 🕌'];
+    document.getElementById('mascot-msg').textContent=msgs[Math.floor(Math.random()*msgs.length)];
+  }
+},8000);
+</script>
+</body>
+</html>
